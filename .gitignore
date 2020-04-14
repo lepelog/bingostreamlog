@@ -113,3 +113,4 @@ venv
 .vscode
 .env
 bingolog*.txt
+*.log
