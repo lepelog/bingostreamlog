@@ -81,7 +81,7 @@ def log_streams(allstreams):
     with open("bingolog.txt",'a',encoding="UTF-8") as f:
         writer=csv.writer(f)
         for stream in allstreams:
-            if 'Speedrun' in stream.tags:
+            if not '!bingo' in stream.channel_status.lower():
                 writer.writerow(stream.to_row())
 
 class BingoStreams(discord.Client):
