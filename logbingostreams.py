@@ -18,6 +18,9 @@ DISCORD_CHANNEL=env.ENVIRON['DISCORD_CHANNEL']
 DISCORD_GUILD=env.ENVIRON['DISCORD_GUILD']
 tformat="%Y-%m-%dT%H:%M:%S"
 
+# whitelisted tags that should appear in discord
+LOG_TAGS=set(('Speedrun','Randomizer','Racing'))
+
 cached_tags={}
 
 def translate_tags(tag_ids):
@@ -103,7 +106,8 @@ class BingoStreams(discord.Client):
             new_streams=get_bingo_streams(already_seen_streams)
             log_streams(new_streams)
             for stream in new_streams:
-                if 'Speedrun' in stream.tags:
+                # make sure it has a whitelisted tag
+                if LOG_TAGS.intersection(stream.tags):
                     await channel.send(embed=stream.to_embed())
             print('logged streams')
             await asyncio.sleep(5 * 60) # task runs every 60 seconds
