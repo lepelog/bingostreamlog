@@ -106,8 +106,8 @@ class BingoStreams(discord.Client):
             new_streams=get_bingo_streams(already_seen_streams)
             log_streams(new_streams)
             for stream in new_streams:
-                # make sure it has a whitelisted tag
-                if LOG_TAGS.intersection(stream.tags):
+                # low effort non bingo filter
+                if not '!bingo' in stream.channel_status.lower():
                     await channel.send(embed=stream.to_embed())
             print('logged streams')
             await asyncio.sleep(5 * 60) # task runs every 60 seconds
