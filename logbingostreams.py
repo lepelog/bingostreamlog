@@ -60,14 +60,15 @@ class Stream:
         embed=discord.Embed(title="new stream Pog", url='https://twitch.tv/'+self.channel_name)
         embed.add_field(name='channel',value=self.channel_name)
         embed.add_field(name='title',value=self.channel_status)
-        embed.add_field(name='game',value=self.channel_game)
+        if self.channel_game:
+            embed.add_field(name='game',value=self.channel_game)
         return embed
 
 def get_bingo_streams(already_seen_streams):
     streams = requests.get("https://api.twitch.tv/kraken/search/streams?query=bingo&limit=100", headers={"Accept": 'application/vnd.twitchtv.v5+json', 'Client-ID': CLIENT_ID}).json()
     allstreams=(Stream(s) for s in streams['streams'] if 'bingo' in s['channel']['status'].lower())
     allstreams=[x for x in allstreams if not (x.channel__id, x.channel_status) in already_seen_streams]
-    print(len(allstreams))
+    print(f"streams: {len(allstreams)}")
     if len(allstreams) > 0:
         helixstreams = requests.get("https://api.twitch.tv/helix/streams?"+'&'.join(map(lambda x: 'user_id={}'.format(x.channel__id), allstreams)),
                         headers={'Client-ID': CLIENT_ID}).json()
@@ -75,6 +76,7 @@ def get_bingo_streams(already_seen_streams):
         for stream in allstreams:
             already_seen_streams.add((stream.channel__id, stream.channel_status))
             stream.tags = translate_tags(tagdict.get(stream.channel__id, []))
+        print(f"cached tags: {len(tagdict)}")
     return allstreams
 
 def log_streams(allstreams):
@@ -86,6 +88,7 @@ def log_streams(allstreams):
         for stream in allstreams:
             if not '!bingo' in stream.channel_status.lower():
                 writer.writerow(stream.to_row())
+    print("logfile written")
 
 class BingoStreams(discord.Client):
     def __init__(self, *args, **kwargs):
@@ -95,22 +98,27 @@ class BingoStreams(discord.Client):
         self.bg_task = self.loop.create_task(self.log_bingo_streams())
 
     async def log_bingo_streams(self):
-        await self.wait_until_ready()
-        already_seen_streams=set()
-        channel = self.get_channel(int(DISCORD_CHANNEL)) # channel ID goes here
-        if not channel:
-            print('channel not found!')
-            return
-        while not self.is_closed():
-            print('logging streams...')
-            new_streams=get_bingo_streams(already_seen_streams)
-            log_streams(new_streams)
-            for stream in new_streams:
-                # low effort non bingo filter
-                if not '!bingo' in stream.channel_status.lower():
-                    await channel.send(embed=stream.to_embed())
-            print('logged streams')
-            await asyncio.sleep(5 * 60) # task runs every 60 seconds
+        try:
+            await self.wait_until_ready()
+            already_seen_streams=set()
+            channel = self.get_channel(int(DISCORD_CHANNEL)) # channel ID goes here
+            if not channel:
+                print('channel not found!')
+                return
+            while not self.is_closed():
+                print('logging streams...')
+                new_streams=get_bingo_streams(already_seen_streams)
+                log_streams(new_streams)
+                for stream in new_streams:
+                    # low effort non bingo filter
+                    if not '!bingo' in stream.channel_status.lower():
+                        await channel.send(embed=stream.to_embed())
+                print('logged streams')
+                await asyncio.sleep(5 * 60) # task runs every 60 seconds
+            print("exit cause closed")
+        except Exception as e:
+            print("error sending to discord:")
+            print(e)
 
 def startup_discord():
     client = BingoStreams()
