@@ -106,7 +106,6 @@ class BingoStreams(discord.Client):
                 # print('channel not found!')
                 return
             while not self.is_closed():
-                raise Exception('catch me')
                 # print('logging streams...')
                 new_streams=get_bingo_streams(already_seen_streams)
                 log_streams(new_streams)
