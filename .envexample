@@ -1,3 +1,5 @@
 CLIENT_ID=asdfasdfasddf
+CLIENT_SECRET="twitchrequiresthisnowcausetheyaredumb"
+REFRESH_TOKEN="gladlythisdoesntseemstoexpiresogreatsecurityimprovement"
 DISCORD_TOKEN=asdfasdfasdf
 DISCORD_CHANNEL=channelid

@@ -13,6 +13,10 @@ env = environ.Env()
 env.read_env()
 
 CLIENT_ID=env.ENVIRON['CLIENT_ID']
+CLIENT_SECRET=env.ENVIRON['CLIENT_SECRET']
+REFRESH_TOKEN=env.ENVIRON['REFRESH_TOKEN']
+oauth_token=None
+oauth_token_expires_at=0
 DISCORD_TOKEN=env.ENVIRON['DISCORD_TOKEN']
 DISCORD_CHANNEL=env.ENVIRON['DISCORD_CHANNEL']
 DISCORD_GUILD=env.ENVIRON['DISCORD_GUILD']
@@ -23,12 +27,31 @@ LOG_TAGS=set(('Speedrun','Randomizer','Racing'))
 
 cached_tags={}
 
+def get_oauth_token():
+    global oauth_token
+    global oauth_token_expires_at
+    if oauth_token_expires_at > time.time():
+        return oauth_token
+    r = requests.post('https://id.twitch.tv/oauth2/token',
+        json={
+            "client_id": CLIENT_ID,
+            "client_secret": CLIENT_SECRET,
+            "grant_type": "refresh_token",
+            "refresh_token": REFRESH_TOKEN,
+        })
+    if not r.status_code == 200:
+        raise Exception("grabbing oauth token failed!")
+    oauth_token = r.json()['access_token']
+    oauth_token_expires_at = time.time() + 3500 # I think they are valid for an hour so 3500 is safe
+    return oauth_token
+    
+
 def translate_tags(tag_ids):
     unknown = tag_ids - cached_tags.keys()
     if len(unknown) > 0:
         tags_str='&'.join(map(lambda x: 'tag_id={}'.format(x), unknown))
         tags=requests.get('https://api.twitch.tv/helix/tags/streams?'+tags_str,
-                    headers={'Client-ID': CLIENT_ID}).json()
+                    headers={'Client-ID': CLIENT_ID, 'Authorization': get_oauth_token()}).json()
         for tag in tags['data']:
             cached_tags[tag['tag_id']]=tag['localization_names']['en-us']
     return list(map(lambda x: cached_tags[x], tag_ids))
@@ -71,7 +94,7 @@ def get_bingo_streams(already_seen_streams):
     # print(f"streams: {len(allstreams)}")
     if len(allstreams) > 0:
         helixstreams = requests.get("https://api.twitch.tv/helix/streams?"+'&'.join(map(lambda x: 'user_id={}'.format(x.channel__id), allstreams)),
-                        headers={'Client-ID': CLIENT_ID}).json()
+                        headers={'Client-ID': CLIENT_ID, 'Authorization': get_oauth_token()}).json()
         tagdict=dict((int(x['user_id']),x['tag_ids']) for x in helixstreams['data'])
         for stream in allstreams:
             already_seen_streams.add((stream.channel__id, stream.channel_status))
@@ -113,6 +136,7 @@ class BingoStreams(discord.Client):
                     # low effort non bingo filter
                     if not '!bingo' in stream.channel_status.lower():
                         await channel.send(embed=stream.to_embed())
+                        # print(stream.to_row())
                 # print('logged streams')
                 await asyncio.sleep(5 * 60) # task runs every 60 seconds
             # print("exit cause closed")
