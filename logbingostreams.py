@@ -112,8 +112,7 @@ class BingoStreams(discord.Client):
                 for stream in new_streams:
                     # low effort non bingo filter
                     if not '!bingo' in stream.channel_status.lower():
-                        pass
-                        # await channel.send(embed=stream.to_embed())
+                        await channel.send(embed=stream.to_embed())
                 # print('logged streams')
                 await asyncio.sleep(5 * 60) # task runs every 60 seconds
             # print("exit cause closed")
