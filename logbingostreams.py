@@ -98,28 +98,31 @@ class BingoStreams(discord.Client):
         self.bg_task = self.loop.create_task(self.log_bingo_streams())
 
     async def log_bingo_streams(self):
-        try:
-            await self.wait_until_ready()
-            already_seen_streams=set()
-            channel = self.get_channel(int(DISCORD_CHANNEL)) # channel ID goes here
-            if not channel:
-                # print('channel not found!')
-                return
-            while not self.is_closed():
+        await self.wait_until_ready()
+        already_seen_streams=set()
+        channel = self.get_channel(int(DISCORD_CHANNEL)) # channel ID goes here
+        if not channel:
+            # print('channel not found!')
+            return
+        while not self.is_closed():
+            try:
                 # print('logging streams...')
                 new_streams=get_bingo_streams(already_seen_streams)
                 log_streams(new_streams)
                 for stream in new_streams:
                     # low effort non bingo filter
                     if not '!bingo' in stream.channel_status.lower():
-                        await channel.send(embed=stream.to_embed())
+                        pass
+                        # await channel.send(embed=stream.to_embed())
                 # print('logged streams')
                 await asyncio.sleep(5 * 60) # task runs every 60 seconds
             # print("exit cause closed")
-        except Exception as e:
-            with open('error.log','a') as f:
-                f.write("error sending to discord:\n")
-                f.write(str(e))
+            except asyncio.CancelledError:
+                return
+            except Exception as e:
+                with open('error.log','a') as f:
+                   f.write("error sending to discord:\n")
+                   f.write(repr(e)+"\n")
             # print("error sending to discord:")
             # print(e)
 
