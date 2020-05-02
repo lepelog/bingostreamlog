@@ -138,7 +138,7 @@ class BingoStreams(discord.Client):
                         await channel.send(embed=stream.to_embed())
                         # print(stream.to_row())
                 # print('logged streams')
-                await asyncio.sleep(5 * 60) # task runs every 60 seconds
+                await asyncio.sleep(5 * 60) # task runs every 5 minutes
             # print("exit cause closed")
             except asyncio.CancelledError:
                 return
@@ -156,4 +156,22 @@ def startup_discord():
     #     print('We have logged in as {0.user}'.format(client))
     client.run(DISCORD_TOKEN)
 
-startup_discord()
+async def file_log_only():
+    already_seen_streams=set()
+    while True:
+        try:
+            print('logging streams...')
+            new_streams=get_bingo_streams(already_seen_streams)
+            log_streams(new_streams)
+            await asyncio.sleep(5 * 60) # task runs every 5 minutes
+            # print("exit cause closed")
+        except asyncio.CancelledError:
+            return
+        except Exception as e:
+            with open('error.log','a') as f:
+                f.write(repr(e)+"\n")
+            # print("error sending to discord:")
+            print(e)
+
+# startup_discord()
+asyncio.run(file_log_only())
