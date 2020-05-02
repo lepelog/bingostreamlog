@@ -156,16 +156,16 @@ def startup_discord():
     #     print('We have logged in as {0.user}'.format(client))
     client.run(DISCORD_TOKEN)
 
-async def file_log_only():
+def file_log_only():
     already_seen_streams=set()
     while True:
         try:
-            print('logging streams...')
+            # print('logging streams...')
             new_streams=get_bingo_streams(already_seen_streams)
             log_streams(new_streams)
-            await asyncio.sleep(5 * 60) # task runs every 5 minutes
+            time.sleep(5 * 60) # task runs every 5 minutes
             # print("exit cause closed")
-        except asyncio.CancelledError:
+        except KeyboardInterrupt:
             return
         except Exception as e:
             with open('error.log','a') as f:
@@ -174,4 +174,4 @@ async def file_log_only():
             print(e)
 
 # startup_discord()
-asyncio.run(file_log_only())
+file_log_only()
