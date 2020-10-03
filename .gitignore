@@ -112,5 +112,6 @@ dmypy.json
 venv
 .vscode
 .env
+secretsettings.py
 bingolog*.txt
 *.log

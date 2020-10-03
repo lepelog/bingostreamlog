@@ -1,25 +1,17 @@
 import requests
 import time
-from datetime import datetime#
+from datetime import datetime
 import os
 import csv
 import json
-import environ
 import discord
 from discord.ext import tasks, commands
 import asyncio
 
-env = environ.Env()
-env.read_env()
+from secretsettings import CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN, DISCORD_TOKEN, DISCORD_GUILD, DISCORD_CHANNEL
 
-CLIENT_ID=env.ENVIRON['CLIENT_ID']
-CLIENT_SECRET=env.ENVIRON['CLIENT_SECRET']
-REFRESH_TOKEN=env.ENVIRON['REFRESH_TOKEN']
 oauth_token=None
 oauth_token_expires_at=0
-DISCORD_TOKEN=env.ENVIRON['DISCORD_TOKEN']
-DISCORD_CHANNEL=env.ENVIRON['DISCORD_CHANNEL']
-DISCORD_GUILD=env.ENVIRON['DISCORD_GUILD']
 tformat="%Y-%m-%dT%H:%M:%S"
 
 # whitelisted tags that should appear in discord
