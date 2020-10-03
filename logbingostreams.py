@@ -23,19 +23,18 @@ def get_oauth_token():
     global oauth_token
     global oauth_token_expires_at
     if oauth_token_expires_at > time.time():
-        return oauth_token
+        return "Bearer "+oauth_token
     r = requests.post('https://id.twitch.tv/oauth2/token',
         json={
             "client_id": CLIENT_ID,
             "client_secret": CLIENT_SECRET,
-            "grant_type": "refresh_token",
-            "refresh_token": REFRESH_TOKEN,
+            "grant_type": "client_credentials",
         })
     if not r.status_code == 200:
         raise Exception("grabbing oauth token failed!")
     oauth_token = r.json()['access_token']
     oauth_token_expires_at = time.time() + 3500 # I think they are valid for an hour so 3500 is safe
-    return oauth_token
+    return "Bearer "+oauth_token
     
 
 def translate_tags(tag_ids):
@@ -43,7 +42,7 @@ def translate_tags(tag_ids):
     if len(unknown) > 0:
         tags_str='&'.join(map(lambda x: 'tag_id={}'.format(x), unknown))
         tags=requests.get('https://api.twitch.tv/helix/tags/streams?'+tags_str,
-                    headers={'Client-ID': CLIENT_ID, 'Authorization': get_oauth_token()}).json()
+                    headers={'client-id': CLIENT_ID, 'authorization': get_oauth_token()}).json()
         for tag in tags['data']:
             cached_tags[tag['tag_id']]=tag['localization_names']['en-us']
     return list(map(lambda x: cached_tags[x], tag_ids))
